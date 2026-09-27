@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>SensoPop — Adaptive Sensory Bubble Experience</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --mist:#EEF6F6;
+    --mist-2:#E1EFEE;
+    --ink:#1B2B33;
+    --ink-soft:#5B6E76;
+    --teal:#3E9B92;
+    --teal-deep:#2C726B;
+    --amber:#F2A65A;
+    --panel:#FFFFFF;
+    --line:#D8E6E4;
+    --radius-lg:28px;
+    --radius-md:18px;
+    --radius-sm:12px;
+    --blue:#3E7CE0;
+    --green:#3FAE71;
+    --yellow:#E8B23D;
+    --orange:#E8863D;
+    --red:#DD5C5C;
+    --purple:#8B69D6;
+    --shadow: 0 10px 30px rgba(27,43,51,0.08);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',sans-serif;
+    background:var(--mist);
+    color:var(--ink);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,.brand{font-family:'Quicksand',sans-serif;}
+  button{font-family:inherit;}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;}
+  :focus-visible{outline:3px solid var(--teal-deep);outline-offset:3px;}
+
+  /* ---------- shared chrome ---------- */
+  .topbar{
+    position:fixed;top:0;left:0;right:0;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 28px;
+    background:rgba(238,246,246,0.85);
+    backdrop-filter:blur(8px);
+    z-index:40;
+    border-bottom:1px solid transparent;
+  }
+  .topbar.solid{border-bottom:1px solid var(--line);}
+  .brand{font-weight:700;font-size:1.25rem;color:var(--teal-deep);letter-spacing:0.2px;display:flex;align-items:center;gap:8px;cursor:pointer;background:none;border:none;}
+  .brand .dot{width:11px;height:11px;border-radius:50%;background:var(--amber);display:inline-block;}
+  .topnav{display:flex;gap:6px;}
+  .topnav button{
+    background:none;border:none;color:var(--ink-soft);padding:9px 14px;border-radius:100px;
+    font-size:0.92rem;cursor:pointer;transition:background .15s, color .15s;
+  }
+  .topnav button:hover{background:var(--mist-2);color:var(--ink);}
+  .topnav button.active{background:var(--teal);color:#fff;}
+
+  .view{display:none;min-height:100vh;padding-top:76px;}
+  .view.active{display:block;}
+
+  /* ---------- HOME ---------- */
+  #view-home{padding-top:0;}
+  .hero{
+    position:relative;
+    min-height:100vh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    padding:100px 24px 60px;
+    overflow:hidden;
+  }
+  .hero-orb{position:absolute;border-radius:50%;filter:blur(1px);opacity:0.55;animation:float 9s ease-in-out infinite;}
+  .hero .brand-row{position:absolute;top:16px;left:28px;font-weight:700;color:var(--teal-deep);font-size:1.15rem;}
+  @keyframes float{
+    0%,100%{transform:translateY(0) translateX(0);}
+    50%{transform:translateY(-22px) translateX(10px);}
+  }
+  .hero h1{
+    font-size:clamp(2.4rem,6vw,4.2rem);
+    line-height:1.05;
+    margin:0 0 18px;
+    color:var(--ink);
+    z-index:2;
+    max-width:14ch;
+  }
+  .hero p.lede{
+    max-width:520px;color:var(--ink-soft);font-size:1.08rem;line-height:1.6;margin:0 0 34px;z-index:2;
+  }
+  .cta-row{display:flex;gap:14px;z-index:2;flex-wrap:wrap;justify-content:center;}
+  .btn{
+    border:none;cursor:pointer;font-weight:600;border-radius:100px;padding:14px 30px;font-size:1rem;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--teal);color:#fff;box-shadow:0 8px 22px rgba(62,155,146,0.35);}
+  .btn-primary:hover{box-shadow:0 10px 26px rgba(62,155,146,0.45);}
+  .btn-ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);}
+  .btn-ghost:hover{background:var(--mist-2);}
+  .btn-small{padding:9px 18px;font-size:0.88rem;}
+
+  .how-it-works{
+    max-width:960px;margin:20px auto 80px;padding:0 28px;
+    display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+  }
+  .how-card{
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);
+    padding:26px 22px;text-align:left;
+  }
+  .how-card .glyph{width:38px;height:38px;border-radius:50%;margin-bottom:14px;}
+  .how-card h3{margin:0 0 8px;font-size:1.05rem;}
+  .how-card p{margin:0;color:var(--ink-soft);font-size:0.92rem;line-height:1.55;}
+
+  .disclaimer{
+    max-width:720px;margin:0 auto 90px;padding:20px 24px;
+    background:var(--panel);border:1px dashed var(--line);border-radius:var(--radius-md);
+    color:var(--ink-soft);font-size:0.88rem;line-height:1.6;text-align:left;
+  }
+  .disclaimer strong{color:var(--ink);}
+
+  @media (max-width:760px){
+    .how-it-works{grid-template-columns:1fr;}
+  }
+
+  /* ---------- SETUP ---------- */
+  .setup-wrap{max-width:880px;margin:0 auto;padding:40px 24px 100px;}
+  .setup-head{text-align:center;margin-bottom:36px;}
+  .setup-head h1{font-size:2rem;margin:0 0 8px;}
+  .setup-head p{color:var(--ink-soft);margin:0;}
+  .adaptive-banner{
+    max-width:880px;margin:0 auto 24px;padding:14px 20px;background:#FFF7EA;border:1px solid #F1D9AE;
+    border-radius:var(--radius-sm);color:#8A5B14;font-size:0.9rem;display:flex;gap:10px;align-items:flex-start;
+  }
+  .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:700px){.setup-grid{grid-template-columns:1fr;}}
+  .setup-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:22px 24px;}
+  .setup-card h2{font-size:1.05rem;margin:0 0 16px;display:flex;align-items:center;gap:8px;}
+  .field{margin-bottom:16px;}
+  .field:last-child{margin-bottom:0;}
+  .field label{display:flex;justify-content:space-between;font-size:0.88rem;color:var(--ink-soft);margin-bottom:8px;}
+  .field label span.val{color:var(--teal-deep);font-weight:600;}
+  input[type=range]{width:100%;accent-color:var(--teal);}
+  .segmented{display:flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;}
+  .segmented button{
+    flex:1;background:var(--panel);border:none;padding:9px 6px;font-size:0.85rem;color:var(--ink-soft);cursor:pointer;
+  }
+  .segmented button.active{background:var(--teal);color:#fff;}
+  .chip-row{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    border:1px solid var(--line);background:var(--panel);border-radius:100px;padding:7px 14px;font-size:0.83rem;
+    cursor:pointer;color:var(--ink-soft);
+  }
+  .chip.active{background:var(--teal-deep);color:#fff;border-color:var(--teal-deep);}
+  .setup-footer{display:flex;justify-content:center;margin-top:32px;}
+
+  /* ---------- EXPERIENCE ---------- */
+  #view-experience{padding-top:0;}
+  .exp-shell{position:fixed;inset:0;display:flex;flex-direction:column;background:var(--mist);}
+  .exp-hud{
+    display:flex;align-items:center;justify-content:space-between;padding:14px 20px;
+    background:rgba(255,255,255,0.9);border-bottom:1px solid var(--line);z-index:10;flex-wrap:wrap;gap:10px;
+  }
+  .exp-hud .hud-left{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .mode-pill{background:var(--mist-2);color:var(--teal-deep);border-radius:100px;padding:6px 14px;font-size:0.85rem;font-weight:600;}
+  .instruction{font-size:0.95rem;color:var(--ink);min-height:1.3em;}
+  .hud-right{display:flex;gap:8px;align-items:center;}
+  .icon-btn{
+    background:var(--panel);border:1px solid var(--line);border-radius:100px;width:38px;height:38px;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;color:var(--ink-soft);
+  }
+  .icon-btn.active-off{color:#C4574F;}
+  .stop-btn{background:#F5EAEA;color:#B24339;border:1px solid #E9C9C4;border-radius:100px;padding:8px 18px;font-weight:600;font-size:0.85rem;cursor:pointer;}
+
+  .bubble-field{
+    position:relative;flex:1;overflow:hidden;
+  }
+  .bubble{
+    position:absolute;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;border:none;
+    box-shadow:0 6px 16px rgba(0,0,0,0.12), inset 0 -6px 10px rgba(0,0,0,0.08), inset 0 6px 10px rgba(255,255,255,0.35);
+    transition:transform .08s ease;
+  }
+  .bubble:active{transform:scale(0.92);}
+  .bubble.pop{animation:popAnim .38s ease forwards;}
+  @keyframes popAnim{
+    0%{transform:scale(1);opacity:1;}
+    40%{transform:scale(1.28);opacity:0.85;}
+    100%{transform:scale(0.1);opacity:0;}
+  }
+  .sequence-strip{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%);
+    display:flex;gap:10px;background:rgba(255,255,255,0.92);padding:12px 18px;border-radius:100px;
+    box-shadow:var(--shadow);z-index:5;
+  }
+  .seq-dot{width:22px;height:22px;border-radius:50%;}
+  .feedback-toast{
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);
+    background:var(--ink);color:#fff;padding:10px 20px;border-radius:100px;font-size:0.9rem;
+    opacity:0;transition:opacity .2s ease;pointer-events:none;z-index:6;
+  }
+  .feedback-toast.show{opacity:0.94;}
+  .feedback-toast.good{background:var(--teal-deep);}
+  .feedback-toast.bad{background:#B24339;}
+
+  .session-end{
+    position:absolute;inset:0;background:rgba(238,246,246,0.97);display:none;
+    align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:30px;z-index:20;
+  }
+  .session-end.show{display:flex;}
+  .session-end h2{margin:0 0 10px;}
+  .session-end p{color:var(--ink-soft);max-width:420px;margin:0 0 22px;}
+  .end-stats{display:flex;gap:26px;margin-bottom:26px;flex-wrap:wrap;justify-content:center;}
+  .end-stat{text-align:center;}
+  .end-stat .num{font-family:'Quicksand',sans-serif;font-weight:700;font-size:1.7rem;color:var(--teal-deep);}
+  .end-stat .lab{font-size:0.78rem;color:var(--ink-soft);}
+
+  /* ---------- DASHBOARD ---------- */
+  .dash-wrap{max-width:1080px;margin:0 auto;padding:40px 24px 100px;}
+  .dash-head{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:28px;}
+  .dash-head h1{margin:0;font-size:1.9rem;}
+  .dash-head p{margin:4px 0 0;color:var(--ink-soft);}
+  .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:26px;}
+  @media(max-width:800px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+  .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:18px 20px;}
+  .stat-card .num{font-family:'Quicksand',sans-serif;font-weight:700;font-size:1.6rem;}
+  .stat-card .lab{font-size:0.8rem;color:var(--ink-soft);margin-top:4px;}
+  .chart-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;margin-bottom:20px;}
+  @media(max-width:800px){.chart-grid{grid-template-columns:1fr;}}
+  .chart-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);padding:22px;}
+  .chart-card h3{margin:0 0 16px;font-size:1rem;}
+  .chart-card canvas{max-height:240px;}
+  .pref-card{
+    background:linear-gradient(135deg,#EAF6F4,#F5EFE2);
+    border:1px solid var(--line);border-radius:var(--radius-md);padding:24px;margin-bottom:20px;
+  }
+  .pref-card h3{margin:0 0 6px;}
+  .pref-card .sub{color:var(--ink-soft);font-size:0.88rem;margin-bottom:16px;}
+  .pref-tags{display:flex;flex-wrap:wrap;gap:10px;}
+  .pref-tag{background:#fff;border:1px solid var(--line);border-radius:100px;padding:7px 15px;font-size:0.85rem;display:flex;align-items:center;gap:8px;}
+  .pref-tag .sw{width:12px;height:12px;border-radius:50%;}
+  .empty-state{
+    text-align:center;padding:60px 20px;color:var(--ink-soft);background:var(--panel);
+    border:1px dashed var(--line);border-radius:var(--radius-md);
+  }
+  .reset-row{text-align:right;margin-top:10px;}
+  .reset-row button{background:none;border:none;color:#B24339;font-size:0.82rem;cursor:pointer;text-decoration:underline;}
+
+  ::-webkit-scrollbar{width:10px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;}
+
+  /* ---------- themed pop effects ---------- */
+  .particle{
+    position:absolute;pointer-events:none;z-index:8;
+    animation:particleFly 1s ease-out forwards;
+    will-change:transform,opacity;line-height:1;
+  }
+  .particle.swirl{ animation:particleSwirl 1.15s ease-out forwards; }
+  @keyframes particleFly{
+    0%{ transform:translate(-50%,-50%) translate(0,0) rotate(0deg) scale(1); opacity:1; }
+    100%{ transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) rotate(var(--rot)) scale(0.6); opacity:0; }
+  }
+  @keyframes particleSwirl{
+    0%{ transform:translate(-50%,-50%) translate(0,0) rotate(0deg) scale(1); opacity:1; }
+    55%{ transform:translate(-50%,-50%) translate(calc(var(--dx)*0.45),calc(var(--dy)*0.45)) rotate(240deg) scale(1.15); opacity:0.9; }
+    100%{ transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) rotate(420deg) scale(0.4); opacity:0; }
+  }
+  .ripple-ring{
+    position:absolute;border-radius:50%;border:3px solid;pointer-events:none;z-index:7;
+    animation:rippleExpand .75s ease-out forwards;
+  }
+  @keyframes rippleExpand{
+    0%{ transform:translate(-50%,-50%) scale(0.3); opacity:0.55; }
+    100%{ transform:translate(-50%,-50%) scale(2.6); opacity:0; }
+  }
+  .firefly{
+    position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:8;
+    animation:fireflyFloat 1.2s ease-out forwards;
+  }
+  @keyframes fireflyFloat{
+    0%{ transform:translate(-50%,-50%) translate(0,0) scale(1); opacity:0.9; }
+    100%{ transform:translate(-50%,-50%) translate(var(--dx),var(--dy)) scale(0.3); opacity:0; }
+  }
+
+  .legend-panel{
+    position:absolute;top:14px;right:16px;width:280px;max-width:calc(100% - 32px);
+    background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-md);
+    box-shadow:var(--shadow);padding:16px 18px;z-index:25;font-size:0.82rem;color:var(--ink-soft);
+  }
+  .legend-panel h4{margin:0 0 10px;color:var(--ink);font-size:0.95rem;}
+  .legend-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:9px;}
+  .legend-sw{width:12px;height:12px;border-radius:50%;margin-top:3px;flex:none;}
+  .legend-row b{color:var(--ink);}
+  .legend-close{
+    margin-top:6px;background:none;border:none;color:var(--teal-deep);font-size:0.82rem;cursor:pointer;
+    text-decoration:underline;padding:0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ TOPBAR (shown once app is entered) ============ -->
+<div class="topbar" id="topbar" style="display:none;">
+  <button class="brand" id="brandBtn" onclick="goHome()"><span class="dot"></span>SensoPop</button>
+  <nav class="topnav">
+    <button data-nav="setup" onclick="showView('setup')">Setup</button>
+    <button data-nav="dashboard" onclick="showView('dashboard')">Dashboard</button>
+  </nav>
+</div>
+
+<!-- ============ HOME ============ -->
+<section class="view active" id="view-home">
+  <div class="hero">
+    <div class="hero-orb" style="width:180px;height:180px;background:var(--blue);top:12%;left:8%;animation-delay:0s;"></div>
+    <div class="hero-orb" style="width:120px;height:120px;background:var(--yellow);top:64%;left:12%;animation-delay:1.4s;"></div>
+    <div class="hero-orb" style="width:150px;height:150px;background:var(--purple);top:20%;right:10%;animation-delay:2.2s;"></div>
+    <div class="hero-orb" style="width:100px;height:100px;background:var(--green);bottom:14%;right:16%;animation-delay:0.8s;"></div>
+    <div class="hero-orb" style="width:70px;height:70px;background:var(--orange);top:46%;right:26%;animation-delay:3s;"></div>
+    <div class="brand-row"><span class="dot" style="width:10px;height:10px;border-radius:50%;background:var(--amber);display:inline-block;margin-right:6px;"></span>SensoPop</div>
+    <h1>A bubble world built for your senses.</h1>
+    <p class="lede">Pop, listen, and feel your way through a calm, customisable bubble environment — designed for sensory exploration, focus, and gentle attention play.</p>
+    <div class="cta-row">
+      <button class="btn btn-primary" onclick="showView('setup')">Start Experience</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('howItWorks').scrollIntoView({behavior:'smooth'})">How It Works</button>
+    </div>
+  </div>
+
+  <div class="how-it-works" id="howItWorks">
+    <div class="how-card">
+      <div class="glyph" style="background:var(--blue);"></div>
+      <h3>Choose your senses</h3>
+      <p>Set how many bubbles appear, how fast they move, and how strong the sound and vibration should feel — before you begin.</p>
+    </div>
+    <div class="how-card">
+      <div class="glyph" style="background:var(--yellow);"></div>
+      <h3>Pop, listen, feel</h3>
+      <p>Every bubble bursts with its own sound and haptic pulse. Play freely, or try a focused activity like colour matching or memory sequences.</p>
+    </div>
+    <div class="how-card">
+      <div class="glyph" style="background:var(--purple);"></div>
+      <h3>See your patterns</h3>
+      <p>A private dashboard shows which colours, sounds, and speeds you tend to enjoy — so future sessions can gently adapt to you.</p>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>What SensoPop is.</strong> SensoPop is an experimental, educational sensory-engagement prototype. It supports sensory exploration and attention-based play through customisable visual, sound, and vibration feedback.
+    <br><br>
+    <strong>What it isn't.</strong> It is not a medical, diagnostic, or therapeutic tool. It does not diagnose, treat, or cure ADHD, autism, or any other condition, and it does not label or assess any user. If you have questions about attention, sensory processing, or development, please speak with a qualified professional.
+  </div>
+</section>
+
+<!-- ============ SETUP ============ -->
+<section class="view" id="view-setup">
+  <div class="setup-wrap">
+    <div class="setup-head">
+      <h1>Set up your session</h1>
+      <p>Adjust visuals, sound, and vibration until it feels right. You can change these anytime.</p>
+    </div>
+
+    <div class="adaptive-banner" id="adaptiveBanner" style="display:none;">
+      💡 <span id="adaptiveText"></span>
+    </div>
+
+    <div class="setup-grid">
+      <div class="setup-card">
+        <h2>👁️ Visual</h2>
+        <div class="field">
+          <label>Number of bubbles <span class="val" id="valBubbleCount">14</span></label>
+          <input type="range" id="bubbleCount" min="6" max="30" value="14">
+        </div>
+        <div class="field">
+          <label>Bubble size <span class="val" id="valBubbleSize">Medium</span></label>
+          <input type="range" id="bubbleSize" min="1" max="3" value="2">
+        </div>
+        <div class="field">
+          <label>Movement speed <span class="val" id="valSpeed">Moderate</span></label>
+          <input type="range" id="speed" min="1" max="4" value="2">
+        </div>
+        <div class="field">
+          <label>Animation intensity <span class="val" id="valAnim">Gentle</span></label>
+          <div class="segmented" id="animSeg">
+            <button data-v="low" class="active">Gentle</button>
+            <button data-v="med">Standard</button>
+            <button data-v="high">Lively</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="setup-card">
+        <h2>🔊 Sound</h2>
+        <div class="field">
+          <label>Sound <span class="val" id="valSoundOn">On</span></label>
+          <div class="segmented" id="soundOnSeg">
+            <button data-v="on" class="active">On</button>
+            <button data-v="off">Off</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Intensity</label>
+          <div class="segmented" id="soundIntensitySeg">
+            <button data-v="soft" class="active">Soft</button>
+            <button data-v="medium">Medium</button>
+            <button data-v="strong">Strong</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Sound category</label>
+          <div class="chip-row" id="soundCategoryChips">
+            <button class="chip active" data-v="soundscape">Soundscape</button>
+            <button class="chip" data-v="simple">Simple tones</button>
+            <button class="chip" data-v="pops">Soft pops</button>
+          </div>
+          <p style="font-size:0.8rem;color:var(--ink-soft);margin:8px 0 0;">Soundscape gives every colour its own themed sound — rain, birdsong, a sunny chime, marimba, a soft drum, and a magical galaxy chime. Simple tones and soft pops are quieter, more uniform alternatives.</p>
+        </div>
+      </div>
+
+      <div class="setup-card">
+        <h2>📳 Vibration</h2>
+        <div class="field">
+          <label>Vibration level</label>
+          <div class="segmented" id="vibeSeg">
+            <button data-v="off">Off</button>
+            <button data-v="low" class="active">Low</button>
+            <button data-v="medium">Medium</button>
+            <button data-v="high">High</button>
+          </div>
+        </div>
+        <p style="font-size:0.82rem;color:var(--ink-soft);margin:10px 0 0;">Haptics require a supported device and browser (mostly Android + Chrome). If unsupported, this is skipped automatically.</p>
+      </div>
+
+      <div class="setup-card">
+        <h2>🧩 Mode</h2>
+        <div class="field">
+          <div class="chip-row" id="modeChips">
+            <button class="chip active" data-v="free">Free Explore</button>
+            <button class="chip" data-v="color">Colour Focus</button>
+            <button class="chip" data-v="sound">Sound Match</button>
+            <button class="chip" data-v="memory">Memory Sequence</button>
+          </div>
+        </div>
+        <div class="field">
+          <label>Adaptive Mode <span class="val" id="valAdaptive">On</span></label>
+          <div class="segmented" id="adaptiveSeg">
+            <button data-v="on" class="active">On</button>
+            <button data-v="off">Off</button>
+          </div>
+          <p style="font-size:0.8rem;color:var(--ink-soft);margin:8px 0 0;">Gently nudges future defaults based on your own past sessions. You can always override it manually.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-footer">
+      <button class="btn btn-primary" onclick="startSession()">Start ▸</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXPERIENCE ============ -->
+<section class="view" id="view-experience">
+  <div class="exp-shell">
+    <div class="exp-hud">
+      <div class="hud-left">
+        <span class="mode-pill" id="hudMode">Free Explore</span>
+        <span class="instruction" id="hudInstruction"></span>
+      </div>
+      <div class="hud-right">
+        <button class="icon-btn" id="soundToggleBtn" title="Toggle sound">🔊</button>
+        <button class="icon-btn" id="vibeToggleBtn" title="Toggle vibration">📳</button>
+        <button class="icon-btn" id="legendBtn" title="Colour legend">ℹ️</button>
+        <button class="stop-btn" onclick="endSession()">Stop</button>
+      </div>
+    </div>
+    <div class="bubble-field" id="bubbleField">
+      <div class="sequence-strip" id="sequenceStrip" style="display:none;"></div>
+      <div class="feedback-toast" id="feedbackToast"></div>
+      <div class="legend-panel" id="legendPanel" style="display:none;">
+        <h4>What each bubble does</h4>
+        <div class="legend-row"><span class="legend-sw" style="background:#3E7CE0"></span><span><b>Blue — Rain drop.</b> Droplets &amp; ripple, soft rain sound, slow gentle pulse.</span></div>
+        <div class="legend-row"><span class="legend-sw" style="background:#3FAE71"></span><span><b>Green — Forest.</b> Leaves &amp; fireflies, birdsong, rhythmic gentle pulse.</span></div>
+        <div class="legend-row"><span class="legend-sw" style="background:#E8B23D"></span><span><b>Yellow — Sunshine.</b> Sparkles, bright chime, short light double pulse.</span></div>
+        <div class="legend-row"><span class="legend-sw" style="background:#E8863D"></span><span><b>Orange — Warm spark.</b> Glowing sparks, marimba pop, medium pulse.</span></div>
+        <div class="legend-row"><span class="legend-sw" style="background:#DD5C5C"></span><span><b>Red — Energy burst.</b> Heart waves, soft drum beat, stronger quick pulse.</span></div>
+        <div class="legend-row"><span class="legend-sw" style="background:#8B69D6"></span><span><b>Purple — Galaxy.</b> Swirling stars, magical chime, slow wave-like pulse.</span></div>
+        <button class="legend-close" onclick="toggleLegend(false)">Close</button>
+      </div>
+      <div class="session-end" id="sessionEnd">
+        <h2 id="endTitle">Nice work!</h2>
+        <p id="endSub">Here's how this session went.</p>
+        <div class="end-stats" id="endStats"></div>
+        <div class="cta-row">
+          <button class="btn btn-primary" onclick="showView('dashboard')">View Dashboard</button>
+          <button class="btn btn-ghost" onclick="showView('setup')">New Session</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="view" id="view-dashboard">
+  <div class="dash-wrap">
+    <div class="dash-head">
+      <div>
+        <h1>Your dashboard</h1>
+        <p>Anonymous, on-device data from your own sessions. Nothing here is shared or diagnostic.</p>
+      </div>
+      <button class="btn btn-primary btn-small" onclick="showView('setup')">Start a session</button>
+    </div>
+
+    <div id="dashboardContent"></div>
+  </div>
+</section>
+
+<script>
+/* ============================================================
+   SensoPop prototype — client-only implementation.
+   Data is stored locally in this browser via localStorage and
+   never leaves the device. No personally identifying information
+   is collected at any point.
+   ============================================================ */
+
+const STORAGE_KEY = 'sensopop_sessions_v1';
+const PREFS_KEY = 'sensopop_prefs_v1';
+
+const COLORS = [
+  { id:'blue',   hex:'#3E7CE0', freq:196.0, wave:'sine',     vibeBase:[70] },              // Rain drop: soft, slow single pulse
+  { id:'green',  hex:'#3FAE71', freq:261.6, wave:'triangle', vibeBase:[25,20,25,20,25] },  // Forest: gentle rhythmic pulse
+  { id:'yellow', hex:'#E8B23D', freq:329.6, wave:'square',   vibeBase:[15,10,15] },        // Sunshine: short light double pulse
+  { id:'orange', hex:'#E8863D', freq:392.0, wave:'sawtooth', vibeBase:[45] },              // Warm spark: medium single pulse
+  { id:'red',    hex:'#DD5C5C', freq:220.0, wave:'sine',     vibeBase:[15,8,15,8,20] },     // Energy burst: stronger quick pulse
+  { id:'purple', hex:'#8B69D6', freq:293.7, wave:'triangle', vibeBase:[30,25,45,25,60] }    // Galaxy: slow wave-like pulse
+];
+const colorMap = Object.fromEntries(COLORS.map(c=>[c.id,c]));
+
+/* Visual pop-effect config per colour: emoji particles + optional ripple/fireflies/swirl */
+const EFFECTS = {
+  blue:   { emojis:['💧'],        count:5, spread:36, driftDown:true,  ripple:true,  rippleColor:'#3E7CE0' },
+  green:  { emojis:['🍃'],        count:5, spread:58, glowDots:4,      ripple:false, rippleColor:null },
+  yellow: { emojis:['✨'],        count:7, spread:70, ripple:false,    rippleColor:null },
+  orange: { emojis:['✨','🔸'],   count:6, spread:55, ripple:false,    rippleColor:null },
+  red:    { emojis:['❤️'],       count:5, spread:60, ripple:true,     rippleColor:'#DD5C5C' },
+  purple: { emojis:['⭐','✨'],   count:6, spread:58, swirl:true,      ripple:true, rippleColor:'#8B69D6' }
+};
+
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ audioCtx=null; }
+  }
+  if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+/* ---------------- state ---------------- */
+let prefs = loadPrefs();
+let session = null; // active session object
+let fieldLoopId = null;
+let bubbles = []; // active bubble DOM+physics objects
+let currentSequence = [];
+let userSequence = [];
+let awaitingReproduction = false;
+let soundMatchTarget = null;
+let colorFocusTarget = null;
+let roundStartTime = 0;
+
+/* ---------------- storage helpers ---------------- */
+function loadSessions(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }catch(e){ return []; }
+}
+function saveSessions(list){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }catch(e){}
+}
+function loadPrefs(){
+  try{ return JSON.parse(localStorage.getItem(PREFS_KEY)) || defaultPrefs(); }catch(e){ return defaultPrefs(); }
+}
+function savePrefs(p){
+  try{ localStorage.setItem(PREFS_KEY, JSON.stringify(p)); }catch(e){}
+}
+function defaultPrefs(){
+  return {
+    bubbleCount:14, bubbleSize:2, speed:2, animIntensity:'low',
+    soundOn:true, soundIntensity:'soft', soundCategory:'soundscape',
+    vibeLevel:'low', mode:'free', adaptiveOn:true
+  };
+}
+function newSessionId(){
+  return 'S' + Math.random().toString(36).slice(2,8).toUpperCase();
+}
+
+/* ---------------- view routing ---------------- */
+function showView(name){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.getElementById('topbar').style.display = 'flex';
+  document.querySelectorAll('.topnav button').forEach(b=>b.classList.toggle('active', b.dataset.nav===name));
+  window.scrollTo(0,0);
+  if(name==='setup') renderSetupForm();
+  if(name==='dashboard') renderDashboard();
+  if(name==='experience'){ /* handled by startSession */ }
+  if(name!=='experience') stopBubbleLoop();
+}
+function goHome(){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById('view-home').classList.add('active');
+  document.getElementById('topbar').style.display = 'none';
+  stopBubbleLoop();
+  window.scrollTo(0,0);
+}
+
+/* ---------------- setup form wiring ---------------- */
+function bindSegmented(id, onPick){
+  const wrap = document.getElementById(id);
+  wrap.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      wrap.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      onPick(btn.dataset.v);
+    });
+  });
+}
+function bindChips(id, multi, onPick){
+  const wrap = document.getElementById(id);
+  wrap.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      if(!multi) wrap.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.toggle('active');
+      onPick(chip.dataset.v, chip.classList.contains('active'));
+    });
+  });
+}
+
+function renderSetupForm(){
+  // apply adaptive suggestion banner
+  const banner = document.getElementById('adaptiveBanner');
+  const suggestion = computeAdaptiveSuggestion();
+  if(prefs.adaptiveOn && suggestion){
+    banner.style.display = 'flex';
+    document.getElementById('adaptiveText').textContent = suggestion.message;
+    // apply suggested defaults only if user hasn't manually diverged this visit
+    Object.assign(prefs, suggestion.apply);
+  } else {
+    banner.style.display = 'none';
+  }
+
+  document.getElementById('bubbleCount').value = prefs.bubbleCount;
+  document.getElementById('valBubbleCount').textContent = prefs.bubbleCount;
+  document.getElementById('bubbleSize').value = prefs.bubbleSize;
+  document.getElementById('valBubbleSize').textContent = ['Small','Medium','Large'][prefs.bubbleSize-1];
+  document.getElementById('speed').value = prefs.speed;
+  document.getElementById('valSpeed').textContent = ['Very slow','Slow','Moderate','Fast'][prefs.speed-1];
+
+  setSegActive('animSeg', prefs.animIntensity);
+  document.getElementById('valAnim').textContent = {low:'Gentle',med:'Standard',high:'Lively'}[prefs.animIntensity];
+  setSegActive('soundOnSeg', prefs.soundOn ? 'on':'off');
+  document.getElementById('valSoundOn').textContent = prefs.soundOn ? 'On':'Off';
+  setSegActive('soundIntensitySeg', prefs.soundIntensity);
+  setChipActive('soundCategoryChips', prefs.soundCategory);
+  setSegActive('vibeSeg', prefs.vibeLevel);
+  setChipActive('modeChips', prefs.mode);
+  setSegActive('adaptiveSeg', prefs.adaptiveOn ? 'on':'off');
+  document.getElementById('valAdaptive').textContent = prefs.adaptiveOn ? 'On':'Off';
+}
+function setSegActive(id, val){
+  document.querySelectorAll('#'+id+' button').forEach(b=>b.classList.toggle('active', b.dataset.v===val));
+}
+function setChipActive(id, val){
+  document.querySelectorAll('#'+id+' .chip').forEach(b=>b.classList.toggle('active', b.dataset.v===val));
+}
+
+document.getElementById('bubbleCount').addEventListener('input', e=>{
+  prefs.bubbleCount = +e.target.value; document.getElementById('valBubbleCount').textContent = prefs.bubbleCount;
+});
+document.getElementById('bubbleSize').addEventListener('input', e=>{
+  prefs.bubbleSize = +e.target.value; document.getElementById('valBubbleSize').textContent = ['Small','Medium','Large'][prefs.bubbleSize-1];
+});
+document.getElementById('speed').addEventListener('input', e=>{
+  prefs.speed = +e.target.value; document.getElementById('valSpeed').textContent = ['Very slow','Slow','Moderate','Fast'][prefs.speed-1];
+});
+bindSegmented('animSeg', v=>{ prefs.animIntensity=v; document.getElementById('valAnim').textContent = {low:'Gentle',med:'Standard',high:'Lively'}[v]; });
+bindSegmented('soundOnSeg', v=>{ prefs.soundOn = (v==='on'); document.getElementById('valSoundOn').textContent = prefs.soundOn?'On':'Off'; });
+bindSegmented('soundIntensitySeg', v=> prefs.soundIntensity=v);
+bindChips('soundCategoryChips', false, v=> prefs.soundCategory=v);
+bindSegmented('vibeSeg', v=> prefs.vibeLevel=v);
+bindChips('modeChips', false, v=> prefs.mode=v);
+bindSegmented('adaptiveSeg', v=>{ prefs.adaptiveOn = (v==='on'); document.getElementById('valAdaptive').textContent = prefs.adaptiveOn?'On':'Off'; });
+
+/* ---------------- adaptive suggestion engine ---------------- */
+function computeAdaptiveSuggestion(){
+  const sessions = loadSessions();
+  if(sessions.length < 2) return null;
+
+  const last10 = sessions.slice(-10);
+  const vibeCounts = {}; const soundCounts = {}; const speedVals = [];
+  let errorRateSum = 0, errorRateN = 0;
+  last10.forEach(s=>{
+    vibeCounts[s.settings.vibeLevel] = (vibeCounts[s.settings.vibeLevel]||0)+1;
+    soundCounts[s.settings.soundIntensity] = (soundCounts[s.settings.soundIntensity]||0)+1;
+    speedVals.push(s.settings.speed);
+    if(s.mode!=='free' && typeof s.accuracy==='number'){
+      errorRateSum += (1-s.accuracy); errorRateN++;
+    }
+  });
+  const topVibe = Object.entries(vibeCounts).sort((a,b)=>b[1]-a[1])[0];
+  const topSound = Object.entries(soundCounts).sort((a,b)=>b[1]-a[1])[0];
+  const avgSpeed = speedVals.reduce((a,b)=>a+b,0)/speedVals.length;
+  const avgErrorRate = errorRateN ? errorRateSum/errorRateN : null;
+
+  const apply = {};
+  let messages = [];
+
+  if(topVibe && topVibe[1] >= Math.ceil(last10.length*0.5)){
+    apply.vibeLevel = topVibe[0];
+    messages.push(`you tend to prefer ${topVibe[0]} vibration`);
+  }
+  if(topSound && topSound[1] >= Math.ceil(last10.length*0.5)){
+    apply.soundIntensity = topSound[0];
+    messages.push(`${topSound[0]} sound`);
+  }
+  if(avgErrorRate !== null){
+    if(avgErrorRate > 0.4){
+      apply.speed = Math.max(1, Math.round(avgSpeed) - 1);
+      messages.push('a slightly slower pace after recent sessions');
+    } else if(avgErrorRate < 0.12){
+      apply.speed = Math.min(4, Math.round(avgSpeed) + 1);
+      messages.push('a slightly faster pace since recent rounds went smoothly');
+    }
+  }
+  if(Object.keys(apply).length === 0) return null;
+  return {
+    apply,
+    message: `Based on your last ${last10.length} sessions, we've gently pre-filled ${messages.join(', ')}. You can change anything below.`
+  };
+}
+
+/* ---------------- session lifecycle ---------------- */
+function startSession(){
+  savePrefs(prefs);
+  session = {
+    id: newSessionId(),
+    startedAt: Date.now(),
+    mode: prefs.mode,
+    settings: { ...prefs },
+    interactions: [], // per-bubble/round events
+    correct: 0,
+    incorrect: 0,
+    responseTimes: [],
+  };
+  document.getElementById('hudMode').textContent = {
+    free:'Free Explore', color:'Colour Focus', sound:'Sound Match', memory:'Memory Sequence'
+  }[session.mode];
+  document.getElementById('soundToggleBtn').textContent = prefs.soundOn ? '🔊' : '🔇';
+  document.getElementById('vibeToggleBtn').textContent = prefs.vibeLevel!=='off' ? '📳' : '🚫';
+  document.getElementById('sessionEnd').classList.remove('show');
+  showView('experience');
+  document.getElementById('view-experience').classList.add('active');
+  document.getElementById('topbar').style.display='flex';
+
+  document.getElementById('soundToggleBtn').onclick = ()=>{
+    prefs.soundOn = !prefs.soundOn;
+    document.getElementById('soundToggleBtn').textContent = prefs.soundOn ? '🔊':'🔇';
+  };
+  document.getElementById('vibeToggleBtn').onclick = ()=>{
+    prefs.vibeLevel = prefs.vibeLevel==='off' ? (session.settings.vibeLevel==='off'?'low':session.settings.vibeLevel) : 'off';
+    document.getElementById('vibeToggleBtn').textContent = prefs.vibeLevel!=='off' ? '📳':'🚫';
+  };
+  document.getElementById('legendBtn').onclick = ()=> toggleLegend();
+  toggleLegend(false);
+
+  clearField();
+  setupModeRound();
+  spawnBubbles();
+  startBubbleLoop();
+}
+
+function endSession(){
+  if(!session) { showView('dashboard'); return; }
+  session.endedAt = Date.now();
+  session.durationSec = Math.round((session.endedAt - session.startedAt)/1000);
+  const total = session.correct + session.incorrect;
+  session.accuracy = total>0 ? session.correct/total : null;
+  session.avgResponseSec = session.responseTimes.length
+    ? +(session.responseTimes.reduce((a,b)=>a+b,0)/session.responseTimes.length).toFixed(2) : null;
+
+  const preferred = mostFrequent(session.interactions.map(i=>i.color));
+  session.preferredColor = preferred;
+
+  const all = loadSessions();
+  all.push(session);
+  saveSessions(all);
+
+  showSessionEndScreen(session);
+  stopBubbleLoop();
+}
+
+function showSessionEndScreen(s){
+  document.getElementById('endTitle').textContent = s.mode==='free' ? 'Session complete' : 'Round complete';
+  document.getElementById('endSub').textContent = "Here's a quick summary — nothing here is scored against anyone else.";
+  const stats = [];
+  stats.push({num:s.interactions.length, lab:'Bubbles popped'});
+  stats.push({num:s.durationSec+'s', lab:'Duration'});
+  if(s.mode!=='free'){
+    stats.push({num: s.accuracy!==null ? Math.round(s.accuracy*100)+'%' : '—', lab:'Accuracy'});
+    stats.push({num: s.avgResponseSec!==null ? s.avgResponseSec+'s' : '—', lab:'Avg. response'});
+  } else if(s.preferredColor){
+    stats.push({num: capitalize(s.preferredColor), lab:'Most popped colour'});
+  }
+  document.getElementById('endStats').innerHTML = stats.map(st=>
+    `<div class="end-stat"><div class="num">${st.num}</div><div class="lab">${st.lab}</div></div>`
+  ).join('');
+  document.getElementById('sessionEnd').classList.add('show');
+}
+
+function mostFrequent(arr){
+  if(!arr.length) return null;
+  const counts={};
+  arr.forEach(a=>counts[a]=(counts[a]||0)+1);
+  return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+}
+function capitalize(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+
+/* ---------------- bubble field physics + rendering ---------------- */
+function clearField(){
+  const field = document.getElementById('bubbleField');
+  field.querySelectorAll('.bubble').forEach(b=>b.remove());
+  bubbles = [];
+  document.getElementById('sequenceStrip').style.display='none';
+}
+
+function sizePx(){
+  return [46,64,86][prefs.bubbleSize-1] || 64;
+}
+function speedFactor(){
+  return [0.25,0.5,0.9,1.5][prefs.speed-1] || 0.5;
+}
+
+function spawnBubbles(){
+  const field = document.getElementById('bubbleField');
+  const rect = field.getBoundingClientRect();
+  const count = Math.max(4, Math.min(30, prefs.bubbleCount));
+  const size = sizePx();
+  for(let i=0;i<count;i++){
+    const color = COLORS[Math.floor(Math.random()*COLORS.length)];
+    const el = document.createElement('button');
+    el.className='bubble';
+    el.style.width = size+'px';
+    el.style.height = size+'px';
+    el.style.background = `radial-gradient(circle at 32% 28%, #ffffff55, ${color.hex})`;
+    el.setAttribute('aria-label', color.id+' bubble');
+    const x = Math.random()*(rect.width-size);
+    const y = Math.random()*(rect.height-size-40)+40;
+    const vx = (Math.random()*2-1) * speedFactor() * 30;
+    const vy = (Math.random()*2-1) * speedFactor() * 30;
+    el.style.left = x+'px';
+    el.style.top = y+'px';
+    const bubbleObj = { el, x, y, vx, vy, size, color: color.id };
+    el.addEventListener('click', ()=>onBubbleClick(bubbleObj));
+    field.appendChild(el);
+    bubbles.push(bubbleObj);
+  }
+}
+
+function startBubbleLoop(){
+  stopBubbleLoop();
+  const field = document.getElementById('bubbleField');
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(0.05, (now-last)/1000); last = now;
+    const rect = field.getBoundingClientRect();
+    bubbles.forEach(b=>{
+      b.x += b.vx*dt; b.y += b.vy*dt;
+      if(b.x<0){b.x=0;b.vx*=-1;} if(b.x>rect.width-b.size){b.x=rect.width-b.size;b.vx*=-1;}
+      if(b.y<40){b.y=40;b.vy*=-1;} if(b.y>rect.height-b.size-10){b.y=rect.height-b.size-10;b.vy*=-1;}
+      b.el.style.left = b.x+'px';
+      b.el.style.top = b.y+'px';
+    });
+    fieldLoopId = requestAnimationFrame(loop);
+  }
+  fieldLoopId = requestAnimationFrame(loop);
+}
+function stopBubbleLoop(){
+  if(fieldLoopId){ cancelAnimationFrame(fieldLoopId); fieldLoopId=null; }
+}
+
+/* ---------------- sound + vibration ---------------- */
+function createNoiseBuffer(ctx, duration){
+  const size = Math.max(1, Math.floor(ctx.sampleRate*duration));
+  const buffer = ctx.createBuffer(1, size, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<size;i++) data[i] = Math.random()*2-1;
+  return buffer;
+}
+
+function playColorSound(colorId){
+  if(!prefs.soundOn) return;
+  const ctx = ensureAudio();
+  if(!ctx) return;
+  const now = ctx.currentTime;
+  const volScale = { soft:0.5, medium:1, strong:1.6 }[prefs.soundIntensity] || 1;
+  const vol = 0.14 * volScale;
+
+  if(prefs.soundCategory === 'pops'){
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type='sine'; osc.frequency.setValueAtTime(colorMap[colorId].freq*1.4, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(vol, now+0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now+0.2);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now); osc.stop(now+0.22);
+    return;
+  }
+  if(prefs.soundCategory === 'simple'){
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type='sine'; osc.frequency.setValueAtTime(colorMap[colorId].freq, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(vol, now+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now+0.45);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now); osc.stop(now+0.5);
+    return;
+  }
+
+  // 'soundscape' — each colour gets its own themed sound
+  switch(colorId){
+    case 'blue':   playRainDrop(ctx, now, vol); break;
+    case 'green':  playBirdChirp(ctx, now, vol); break;
+    case 'yellow': playSunChime(ctx, now, vol); break;
+    case 'orange': playMarimbaPop(ctx, now, vol); break;
+    case 'red':    playDrumPop(ctx, now, vol); break;
+    case 'purple': playGalaxyChime(ctx, now, vol); break;
+    default:       playSunChime(ctx, now, vol);
+  }
+}
+
+function playRainDrop(ctx, now, vol){
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.type='sine';
+  osc.frequency.setValueAtTime(1200, now);
+  osc.frequency.exponentialRampToValueAtTime(320, now+0.18);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(vol*0.9, now+0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now+0.2);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now); osc.stop(now+0.22);
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 0.6);
+  const bp = ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=3200; bp.Q.value=0.7;
+  const ngain = ctx.createGain();
+  ngain.gain.setValueAtTime(0.0001, now);
+  ngain.gain.exponentialRampToValueAtTime(vol*0.25, now+0.05);
+  ngain.gain.exponentialRampToValueAtTime(0.0001, now+0.6);
+  noise.connect(bp).connect(ngain).connect(ctx.destination);
+  noise.start(now); noise.stop(now+0.6);
+}
+
+function playBirdChirp(ctx, now, vol){
+  for(let i=0;i<2;i++){
+    const t0 = now + i*0.14;
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type='sine';
+    osc.frequency.setValueAtTime(1600+Math.random()*200, t0);
+    osc.frequency.exponentialRampToValueAtTime(2400, t0+0.06);
+    osc.frequency.exponentialRampToValueAtTime(1400, t0+0.13);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol*0.7, t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.15);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0); osc.stop(t0+0.16);
+  }
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 0.5);
+  const lp = ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=500;
+  const ngain = ctx.createGain();
+  ngain.gain.setValueAtTime(0.0001, now);
+  ngain.gain.exponentialRampToValueAtTime(vol*0.15, now+0.1);
+  ngain.gain.exponentialRampToValueAtTime(0.0001, now+0.5);
+  noise.connect(lp).connect(ngain).connect(ctx.destination);
+  noise.start(now); noise.stop(now+0.5);
+}
+
+function playSunChime(ctx, now, vol){
+  [1, 2, 2.4].forEach((mult, i)=>{
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type='sine'; osc.frequency.setValueAtTime(880*mult, now);
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(vol*(0.8/(i+1)), now+0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now+0.5-0.05*i);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(now); osc.stop(now+0.55);
+  });
+}
+
+function playMarimbaPop(ctx, now, vol){
+  const osc = ctx.createOscillator(); const osc2 = ctx.createOscillator();
+  const gain = ctx.createGain(); const g2 = ctx.createGain();
+  osc.type='sine'; osc.frequency.setValueAtTime(392, now);
+  osc2.type='triangle'; osc2.frequency.setValueAtTime(784, now);
+  g2.gain.value = 0.3;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(vol, now+0.008);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now+0.3);
+  osc.connect(gain); osc2.connect(g2).connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now); osc.stop(now+0.32);
+  osc2.start(now); osc2.stop(now+0.32);
+}
+
+function playDrumPop(ctx, now, vol){
+  const osc = ctx.createOscillator(); const gain = ctx.createGain();
+  osc.type='sine'; osc.frequency.setValueAtTime(160, now);
+  osc.frequency.exponentialRampToValueAtTime(60, now+0.12);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(vol*1.1, now+0.006);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now+0.22);
+  osc.connect(gain).connect(ctx.destination);
+  osc.start(now); osc.stop(now+0.24);
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = createNoiseBuffer(ctx, 0.05);
+  const ngain = ctx.createGain();
+  ngain.gain.setValueAtTime(vol*0.5, now);
+  ngain.gain.exponentialRampToValueAtTime(0.0001, now+0.05);
+  noise.connect(ngain).connect(ctx.destination);
+  noise.start(now); noise.stop(now+0.05);
+}
+
+function playGalaxyChime(ctx, now, vol){
+  [523.3, 659.3, 784.0].forEach((f,i)=>{
+    const t0 = now + i*0.09;
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type='triangle'; osc.frequency.setValueAtTime(f, t0);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(vol*0.6, t0+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+0.6);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0); osc.stop(t0+0.65);
+  });
+}
+
+/* ---------------- themed visual pop effects ---------------- */
+function triggerVisualEffect(colorId, cx, cy, size){
+  const cfg = EFFECTS[colorId];
+  if(!cfg) return;
+  if(cfg.ripple) spawnRipple(cx, cy, size, cfg.rippleColor);
+  spawnParticles(colorId, cx, cy, size, cfg);
+  if(cfg.glowDots) spawnFireflies(cx, cy, size, cfg.glowDots);
+}
+
+function spawnRipple(cx, cy, size, color){
+  const field = document.getElementById('bubbleField');
+  const el = document.createElement('div');
+  el.className = 'ripple-ring';
+  const d = size*1.4;
+  el.style.width = d+'px'; el.style.height = d+'px';
+  el.style.left = cx+'px'; el.style.top = cy+'px';
+  el.style.borderColor = color;
+  field.appendChild(el);
+  setTimeout(()=>el.remove(), 780);
+}
+
+function spawnParticles(colorId, cx, cy, size, cfg){
+  const field = document.getElementById('bubbleField');
+  const fontSize = Math.max(14, Math.round(size*0.3));
+  for(let i=0;i<cfg.count;i++){
+    const span = document.createElement('span');
+    span.className = 'particle' + (cfg.swirl ? ' swirl' : '');
+    span.textContent = cfg.emojis[Math.floor(Math.random()*cfg.emojis.length)];
+    span.style.left = cx+'px'; span.style.top = cy+'px';
+    span.style.fontSize = fontSize+'px';
+    const angle = Math.random()*Math.PI*2;
+    let dx = Math.cos(angle)*cfg.spread;
+    let dy = Math.sin(angle)*cfg.spread;
+    if(cfg.driftDown) dy = Math.abs(dy) + cfg.spread*0.7;
+    span.style.setProperty('--dx', dx.toFixed(1)+'px');
+    span.style.setProperty('--dy', dy.toFixed(1)+'px');
+    span.style.setProperty('--rot', (Math.random()*140-70).toFixed(0)+'deg');
+    field.appendChild(span);
+    setTimeout(()=>span.remove(), 1200);
+  }
+}
+
+function spawnFireflies(cx, cy, size, count){
+  const field = document.getElementById('bubbleField');
+  for(let i=0;i<count;i++){
+    const dot = document.createElement('div');
+    dot.className = 'firefly';
+    dot.style.left = cx+'px'; dot.style.top = cy+'px';
+    dot.style.background = '#8CE6A6';
+    dot.style.boxShadow = '0 0 8px 3px #8CE6A6AA';
+    const angle = Math.random()*Math.PI*2;
+    const dx = Math.cos(angle)*size*0.9;
+    const dy = Math.sin(angle)*size*0.9 - 10;
+    dot.style.setProperty('--dx', dx.toFixed(1)+'px');
+    dot.style.setProperty('--dy', dy.toFixed(1)+'px');
+    field.appendChild(dot);
+    setTimeout(()=>dot.remove(), 1250);
+  }
+}
+
+function toggleLegend(force){
+  const panel = document.getElementById('legendPanel');
+  const show = typeof force === 'boolean' ? force : panel.style.display === 'none';
+  panel.style.display = show ? 'block' : 'none';
+}
+
+function triggerVibration(colorId){
+  if(prefs.vibeLevel==='off') return;
+  if(!('vibrate' in navigator)) return;
+  const c = colorMap[colorId];
+  const scale = { low:0.6, medium:1, high:1.6 }[prefs.vibeLevel] || 1;
+  const pattern = c.vibeBase.map(ms=>Math.round(ms*scale));
+  try{ navigator.vibrate(pattern); }catch(e){}
+}
+
+function popBubbleVisual(bubbleObj){
+  bubbleObj.el.classList.add('pop');
+  setTimeout(()=>{ bubbleObj.el.remove(); }, 380);
+  bubbles = bubbles.filter(b=>b!==bubbleObj);
+}
+
+function showToast(msg, kind){
+  const t = document.getElementById('feedbackToast');
+  t.textContent = msg;
+  t.className = 'feedback-toast show' + (kind ? ' '+kind : '');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=> t.classList.remove('show'), 1100);
+}
+
+/* ---------------- mode logic ---------------- */
+function setupModeRound(){
+  const instrEl = document.getElementById('hudInstruction');
+  const seqStrip = document.getElementById('sequenceStrip');
+  seqStrip.style.display='none';
+  awaitingReproduction=false;
+  roundStartTime = performance.now();
+
+  if(session.mode==='free'){
+    instrEl.textContent = 'Pop any bubbles you like — no pressure, no scoring.';
+  } else if(session.mode==='color'){
+    colorFocusTarget = COLORS[Math.floor(Math.random()*COLORS.length)].id;
+    instrEl.textContent = `Tap the ${capitalize(colorFocusTarget)} bubbles.`;
+  } else if(session.mode==='sound'){
+    soundMatchTarget = COLORS[Math.floor(Math.random()*COLORS.length)].id;
+    instrEl.textContent = 'Listen, then tap the bubble that made this sound. Playing sound…';
+    setTimeout(()=>playColorSound(soundMatchTarget), 500);
+  } else if(session.mode==='memory'){
+    const len = 2 + Math.min(3, Math.floor(loadSessions().length/3)); // gentle ramp with experience
+    currentSequence = Array.from({length:len}, ()=>COLORS[Math.floor(Math.random()*COLORS.length)].id);
+    userSequence = [];
+    instrEl.textContent = 'Watch the sequence…';
+    seqStrip.style.display='flex';
+    seqStrip.innerHTML = currentSequence.map(cid=>`<span class="seq-dot" style="background:${colorMap[cid].hex}"></span>`).join('');
+    setTimeout(()=>{
+      seqStrip.style.display='none';
+      instrEl.textContent = 'Now tap the bubbles in the same order.';
+      awaitingReproduction = true;
+      roundStartTime = performance.now();
+    }, 1200 + len*500);
+  }
+}
+
+function onBubbleClick(bubbleObj){
+  ensureAudio();
+  const rt = +((performance.now()-roundStartTime)/1000).toFixed(2);
+
+  playColorSound(bubbleObj.color);
+  triggerVibration(bubbleObj.color);
+  triggerVisualEffect(bubbleObj.color, bubbleObj.x + bubbleObj.size/2, bubbleObj.y + bubbleObj.size/2, bubbleObj.size);
+
+  const interactionBase = {
+    color: bubbleObj.color,
+    time: Date.now(),
+    responseTimeSec: rt
+  };
+
+  if(session.mode==='free'){
+    session.interactions.push(interactionBase);
+    popBubbleVisual(bubbleObj);
+    respawnOne();
+    return;
+  }
+
+  if(session.mode==='color'){
+    const isCorrect = bubbleObj.color === colorFocusTarget;
+    session.interactions.push({...interactionBase, correct:isCorrect, target:colorFocusTarget});
+    if(isCorrect){ session.correct++; session.responseTimes.push(rt); showToast('Correct!','good'); }
+    else { session.incorrect++; showToast('Not quite — try again','bad'); }
+    popBubbleVisual(bubbleObj);
+    respawnOne();
+    if(isCorrect) setTimeout(setupModeRound, 500);
+    return;
+  }
+
+  if(session.mode==='sound'){
+    const isCorrect = bubbleObj.color === soundMatchTarget;
+    session.interactions.push({...interactionBase, correct:isCorrect, target:soundMatchTarget});
+    if(isCorrect){ session.correct++; session.responseTimes.push(rt); showToast('That was it!','good'); }
+    else { session.incorrect++; showToast('Different sound — listen again','bad'); }
+    popBubbleVisual(bubbleObj);
+    respawnOne();
+    if(isCorrect) setTimeout(setupModeRound, 700);
+    else setTimeout(()=>playColorSound(soundMatchTarget), 400);
+    return;
+  }
+
+  if(session.mode==='memory'){
+    if(!awaitingReproduction) return;
+    userSequence.push(bubbleObj.color);
+    const idx = userSequence.length-1;
+    popBubbleVisual(bubbleObj);
+    respawnOne();
+    if(userSequence[idx] !== currentSequence[idx]){
+      session.incorrect++;
+      session.interactions.push({...interactionBase, correct:false, sequence:currentSequence});
+      showToast('Sequence broken — new one coming up','bad');
+      awaitingReproduction=false;
+      setTimeout(setupModeRound, 900);
+      return;
+    }
+    if(userSequence.length === currentSequence.length){
+      session.correct++;
+      session.responseTimes.push(+((performance.now()-roundStartTime)/1000).toFixed(2));
+      session.interactions.push({...interactionBase, correct:true, sequence:currentSequence});
+      showToast('Sequence complete!','good');
+      awaitingReproduction=false;
+      setTimeout(setupModeRound, 900);
+    }
+  }
+}
+
+function respawnOne(){
+  if(bubbles.length >= Math.max(4, Math.min(30, prefs.bubbleCount))) return;
+  const field = document.getElementById('bubbleField');
+  const rect = field.getBoundingClientRect();
+  const size = sizePx();
+  const color = COLORS[Math.floor(Math.random()*COLORS.length)];
+  const el = document.createElement('button');
+  el.className='bubble';
+  el.style.width = size+'px'; el.style.height = size+'px';
+  el.style.background = `radial-gradient(circle at 32% 28%, #ffffff55, ${color.hex})`;
+  el.setAttribute('aria-label', color.id+' bubble');
+  const x = Math.random()*(rect.width-size);
+  const y = Math.random()*(rect.height-size-40)+40;
+  const vx = (Math.random()*2-1) * speedFactor() * 30;
+  const vy = (Math.random()*2-1) * speedFactor() * 30;
+  el.style.left=x+'px'; el.style.top=y+'px';
+  const bubbleObj = { el, x, y, vx, vy, size, color: color.id };
+  el.addEventListener('click', ()=>onBubbleClick(bubbleObj));
+  field.appendChild(el);
+  bubbles.push(bubbleObj);
+}
+
+/* ---------------- dashboard ---------------- */
+let chartRefs = {};
+function renderDashboard(){
+  const wrap = document.getElementById('dashboardContent');
+  const sessions = loadSessions();
+  if(sessions.length === 0){
+    wrap.innerHTML = `<div class="empty-state">No sessions yet. Start one to see your patterns appear here.</div>`;
+    return;
+  }
+
+  const totalSessions = sessions.length;
+  const totalBubbles = sessions.reduce((a,s)=>a+s.interactions.length,0);
+  const withAcc = sessions.filter(s=>s.accuracy!==null && s.accuracy!==undefined);
+  const avgAcc = withAcc.length ? Math.round(100*withAcc.reduce((a,s)=>a+s.accuracy,0)/withAcc.length) : null;
+  const allRT = sessions.flatMap(s=>s.responseTimes||[]);
+  const avgRT = allRT.length ? (allRT.reduce((a,b)=>a+b,0)/allRT.length).toFixed(2) : null;
+
+  const colorCounts = {};
+  sessions.forEach(s=>s.interactions.forEach(i=>{ colorCounts[i.color]=(colorCounts[i.color]||0)+1; }));
+
+  const soundLevelCounts = {}; const vibeLevelCounts = {};
+  sessions.forEach(s=>{
+    soundLevelCounts[s.settings.soundIntensity]=(soundLevelCounts[s.settings.soundIntensity]||0)+1;
+    vibeLevelCounts[s.settings.vibeLevel]=(vibeLevelCounts[s.settings.vibeLevel]||0)+1;
+  });
+  const preferredSound = Object.entries(soundLevelCounts).sort((a,b)=>b[1]-a[1])[0];
+  const preferredVibe = Object.entries(vibeLevelCounts).sort((a,b)=>b[1]-a[1])[0];
+
+  const modeRT = {color:[], sound:[], memory:[]};
+  sessions.forEach(s=>{ if(modeRT[s.mode] && s.avgResponseSec) modeRT[s.mode].push(s.avgResponseSec); });
+  const modeRTAvg = Object.fromEntries(Object.entries(modeRT).map(([k,v])=>[k, v.length ? +(v.reduce((a,b)=>a+b,0)/v.length).toFixed(2) : null]));
+
+  wrap.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="num">${totalSessions}</div><div class="lab">Total sessions</div></div>
+      <div class="stat-card"><div class="num">${totalBubbles}</div><div class="lab">Bubbles popped</div></div>
+      <div class="stat-card"><div class="num">${avgAcc!==null?avgAcc+'%':'—'}</div><div class="lab">Avg. accuracy</div></div>
+      <div class="stat-card"><div class="num">${avgRT!==null?avgRT+'s':'—'}</div><div class="lab">Avg. response time</div></div>
+    </div>
+
+    <div class="pref-card">
+      <h3>Your sensory preference</h3>
+      <div class="sub">A private summary based only on your own on-device history — not a diagnosis or label.</div>
+      <div class="pref-tags">
+        <span class="pref-tag"><span class="sw" style="background:${colorMap[Object.entries(colorCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'blue'].hex}"></span>Preferred colour: ${capitalize(Object.entries(colorCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—')}</span>
+        <span class="pref-tag">Sound: ${capitalize(preferredSound?.[0]||'—')}</span>
+        <span class="pref-tag">Vibration: ${capitalize(preferredVibe?.[0]||'—')}</span>
+      </div>
+      <p style="margin:14px 0 0;color:var(--ink-soft);font-size:0.86rem;">Based on your previous interactions, you may prefer a ${preferredSound?.[0]==='soft'&&preferredVibe?.[0]==='low' ? 'low-intensity' : (preferredSound?.[0]==='strong'||preferredVibe?.[0]==='high') ? 'higher-intensity' : 'moderate-intensity'} sensory setting.</p>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Colour preference</h3>
+        <canvas id="colorChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Average response time by mode</h3>
+        <canvas id="rtChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>Accuracy over recent sessions</h3>
+      <canvas id="accChart"></canvas>
+    </div>
+
+    <div class="reset-row"><button onclick="resetData()">Clear all local data</button></div>
+  `;
+
+  const colorLabels = COLORS.map(c=>capitalize(c.id));
+  const colorData = COLORS.map(c=>colorCounts[c.id]||0);
+  const colorHexes = COLORS.map(c=>c.hex);
+
+  if(chartRefs.color) chartRefs.color.destroy();
+  if(chartRefs.rt) chartRefs.rt.destroy();
+  if(chartRefs.acc) chartRefs.acc.destroy();
+
+  if(window.Chart){
+    chartRefs.color = new Chart(document.getElementById('colorChart'), {
+      type:'bar',
+      data:{ labels: colorLabels, datasets:[{ data: colorData, backgroundColor: colorHexes, borderRadius:8 }]},
+      options:{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, ticks:{precision:0} } } }
+    });
+    chartRefs.rt = new Chart(document.getElementById('rtChart'), {
+      type:'bar',
+      data:{ labels:['Colour Focus','Sound Match','Memory'],
+        datasets:[{ data:[modeRTAvg.color, modeRTAvg.sound, modeRTAvg.memory], backgroundColor:'#3E9B92', borderRadius:8 }]},
+      options:{ plugins:{legend:{display:false}}, scales:{ y:{ beginAtZero:true, title:{display:true,text:'seconds'} } } }
+    });
+    const last15 = sessions.slice(-15).filter(s=>s.accuracy!==null && s.accuracy!==undefined);
+    chartRefs.acc = new Chart(document.getElementById('accChart'), {
+      type:'line',
+      data:{ labels: last15.map((s,i)=>'#'+(i+1)),
+        datasets:[{ data:last15.map(s=>Math.round(s.accuracy*100)), borderColor:'#F2A65A', backgroundColor:'#F2A65A33', fill:true, tension:0.35 }]},
+      options:{ plugins:{legend:{display:false}}, scales:{ y:{ min:0, max:100, ticks:{callback:v=>v+'%'} } } }
+    });
+  }
+}
+
+function resetData(){
+  if(confirm('This will permanently delete all locally stored SensoPop session data on this device. Continue?')){
+    localStorage.removeItem(STORAGE_KEY);
+    renderDashboard();
+  }
+}
+
+/* ---------------- init ---------------- */
+renderSetupForm();
+</script>
+</body>
+</html>
